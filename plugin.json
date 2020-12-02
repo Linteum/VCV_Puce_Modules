@@ -1,0 +1,23 @@
+{
+  "slug": "puce",
+  "name": "Puce",
+  "version": "1.0.0",
+  "license": "WTFPL",
+  "brand": "Puce",
+  "author": "Grieci theophile",
+  "authorEmail": "",
+  "authorUrl": "",
+  "pluginUrl": "",
+  "manualUrl": "",
+  "sourceUrl": "",
+  "donateUrl": "",
+  "changelogUrl": "",
+  "modules": [
+    {
+      "slug": "megaSeq",
+      "name": "cheap Seq",
+      "description": "",
+      "tags": []
+    }
+  ]
+}

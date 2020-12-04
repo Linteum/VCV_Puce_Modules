@@ -11,6 +11,26 @@ struct ltmMediumKnob : SVGKnob
 		maxAngle = 0.75*M_PI;
 		setSvg(APP->window->loadSvg("C:/Users/Admin/code_projects/GIT/puce/res/ComponentLibrary/ltmMediumKnob.svg"));
     }
+
+    
+    /* data */
+};
+struct ltmInput : app::SvgPort
+{
+    ltmInput() {
+		setSvg(APP->window->loadSvg("C:/Users/Admin/code_projects/GIT/puce/res/ComponentLibrary/ltmInput.svg"));
+    }
+
+    
+    /* data */
+};
+struct ltmOutput : app::SvgPort
+{
+    ltmOutput() {
+		setSvg(APP->window->loadSvg("C:/Users/Admin/code_projects/GIT/puce/res/ComponentLibrary/ltmOutput.svg"));
+    }
+
+    
     /* data */
 };
 

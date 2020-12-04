@@ -38,27 +38,43 @@ struct MegaSeq : Module {
 		NUM_OUTPUTS
 	};
 	enum LightIds {
+		SEQLIGHT1_LIGHT,
+		SEQLIGHT2_LIGHT,
+		SEQLIGHT3_LIGHT,
+		SEQLIGHT4_LIGHT,
+		SEQLIGHT5_LIGHT,
+		SEQLIGHT6_LIGHT,
+		SEQLIGHT7_LIGHT,
+		SEQLIGHT8_LIGHT,
+		SEQLIGHT9_LIGHT,
+		SEQLIGHT10_LIGHT,
+		SEQLIGHT11_LIGHT,
+		SEQLIGHT12_LIGHT,
+		SEQLIGHT13_LIGHT,
+		SEQLIGHT14_LIGHT,
+		SEQLIGHT15_LIGHT,
+		SEQLIGHT16_LIGHT,
 		NUM_LIGHTS
 	};
 
 	MegaSeq() {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-		configParam(CVPARAM1_PARAM, -1.0f, 1.0f, 0.0f, "Step 1", " V");
-		configParam(CVPARAM2_PARAM, -1.0f, 1.0f, 0.0f, "Step 2", " V");
-		configParam(CVPARAM3_PARAM, -1.0f, 1.0f, 0.0f, "Step 3", " V");
-		configParam(CVPARAM4_PARAM, -1.0f, 1.0f, 0.0f, "Step 4", " V");
-		configParam(CVPARAM5_PARAM, -1.0f, 1.0f, 0.0f, "Step 5", " V");
-		configParam(CVPARAM6_PARAM, -1.0f, 1.0f, 0.0f, "Step 6", " V");
-		configParam(CVPARAM7_PARAM, -1.0f, 1.0f, 0.0f, "Step 7", " V");
-		configParam(CVPARAM8_PARAM, -1.0f, 1.0f, 0.0f, "Step 8", " V");
-		configParam(CVPARAM9_PARAM, -1.0f, 1.0f, 0.0f, "Step 9", " V");
-		configParam(CVPARAM10_PARAM, -1.0f, 1.0f, 0.0f, "Step 10", " V");
-		configParam(CVPARAM11_PARAM, -1.0f, 1.0f, 0.0f, "Step 11", " V");
-		configParam(CVPARAM12_PARAM, -1.0f, 1.0f, 0.0f, "Step 12", " V");
-		configParam(CVPARAM13_PARAM, -1.0f, 1.0f, 0.0f, "Step 13", " V");
-		configParam(CVPARAM14_PARAM, -1.0f, 1.0f, 0.0f, "Step 14", " V");
-		configParam(CVPARAM15_PARAM, -1.0f, 1.0f, 0.0f, "Step 15", " V");
-		configParam(CVPARAM16_PARAM, -1.0f, 1.0f, 0.0f, "Step 16", " V");
+		configParam(CVPARAM1_PARAM, 0.f, 1.f, 0.f, "");
+		configParam(CVPARAM2_PARAM, 0.f, 1.f, 0.f, "");
+		configParam(CVPARAM3_PARAM, 0.f, 1.f, 0.f, "");
+		configParam(CVPARAM4_PARAM, 0.f, 1.f, 0.f, "");
+		configParam(CVPARAM5_PARAM, 0.f, 1.f, 0.f, "");
+		configParam(CVPARAM6_PARAM, 0.f, 1.f, 0.f, "");
+		configParam(CVPARAM7_PARAM, 0.f, 1.f, 0.f, "");
+		configParam(CVPARAM8_PARAM, 0.f, 1.f, 0.f, "");
+		configParam(CVPARAM9_PARAM, 0.f, 1.f, 0.f, "");
+		configParam(CVPARAM10_PARAM, 0.f, 1.f, 0.f, "");
+		configParam(CVPARAM11_PARAM, 0.f, 1.f, 0.f, "");
+		configParam(CVPARAM12_PARAM, 0.f, 1.f, 0.f, "");
+		configParam(CVPARAM13_PARAM, 0.f, 1.f, 0.f, "");
+		configParam(CVPARAM14_PARAM, 0.f, 1.f, 0.f, "");
+		configParam(CVPARAM15_PARAM, 0.f, 1.f, 0.f, "");
+		configParam(CVPARAM16_PARAM, 0.f, 1.f, 0.f, "");
 	}
 
 	void process(const ProcessArgs& args) override {
@@ -75,6 +91,23 @@ struct MegaSeqWidget : ModuleWidget {
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(36.76, 60.37)), module, MegaSeq::SEQLIGHT1_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(54.399, 60.37)), module, MegaSeq::SEQLIGHT2_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(72.038, 60.37)), module, MegaSeq::SEQLIGHT3_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(89.677, 60.37)), module, MegaSeq::SEQLIGHT4_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(36.76, 78.135)), module, MegaSeq::SEQLIGHT5_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(54.399, 78.135)), module, MegaSeq::SEQLIGHT6_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(72.038, 78.135)), module, MegaSeq::SEQLIGHT7_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(89.677, 78.135)), module, MegaSeq::SEQLIGHT8_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(36.76, 95.9)), module, MegaSeq::SEQLIGHT9_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(54.399, 95.9)), module, MegaSeq::SEQLIGHT10_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(72.038, 95.9)), module, MegaSeq::SEQLIGHT11_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(89.677, 95.9)), module, MegaSeq::SEQLIGHT12_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(36.76, 113.664)), module, MegaSeq::SEQLIGHT13_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(54.399, 113.664)), module, MegaSeq::SEQLIGHT14_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(72.038, 113.664)), module, MegaSeq::SEQLIGHT15_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(89.677, 113.664)), module, MegaSeq::SEQLIGHT16_LIGHT));
 
 		addParam(createParamCentered<ltmMediumKnob>(mm2px(Vec(36.76, 60.37)), module, MegaSeq::CVPARAM1_PARAM));
 		addParam(createParamCentered<ltmMediumKnob>(mm2px(Vec(54.399, 60.37)), module, MegaSeq::CVPARAM2_PARAM));
@@ -93,17 +126,19 @@ struct MegaSeqWidget : ModuleWidget {
 		addParam(createParamCentered<ltmMediumKnob>(mm2px(Vec(72.038, 113.664)), module, MegaSeq::CVPARAM15_PARAM));
 		addParam(createParamCentered<ltmMediumKnob>(mm2px(Vec(89.677, 113.664)), module, MegaSeq::CVPARAM16_PARAM));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.402, 59.488)), module, MegaSeq::FIRSTSTEPINPUT_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(19.686, 59.677)), module, MegaSeq::LASTSTEPINPUT_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(13.26, 75.552)), module, MegaSeq::STEPINPUT_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(13.449, 90.671)), module, MegaSeq::RESETINPUT_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(13.449, 108.814)), module, MegaSeq::PATTERNSELECTINPUT_INPUT));
+		addInput(createInputCentered<ltmOutput>(mm2px(Vec(7.402, 59.488)), module, MegaSeq::FIRSTSTEPINPUT_INPUT));
+		addInput(createInputCentered<ltmOutput>(mm2px(Vec(19.686, 59.677)), module, MegaSeq::LASTSTEPINPUT_INPUT));
+		addInput(createInputCentered<ltmOutput>(mm2px(Vec(13.26, 75.552)), module, MegaSeq::STEPINPUT_INPUT));
+		addInput(createInputCentered<ltmOutput>(mm2px(Vec(13.449, 90.671)), module, MegaSeq::RESETINPUT_INPUT));
+		addInput(createInputCentered<ltmOutput>(mm2px(Vec(13.449, 108.814)), module, MegaSeq::PATTERNSELECTINPUT_INPUT));
 
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(112.479, 59.677)), module, MegaSeq::GATE1OUTPUT_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(112.857, 72.528)), module, MegaSeq::GATE2OUTPUT_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(112.668, 86.324)), module, MegaSeq::CVOUTPUT_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(113.046, 100.31)), module, MegaSeq::SLEWOUTPUT_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(113.235, 115.996)), module, MegaSeq::EOCOUTPUT_OUTPUT));
+		addOutput(createOutputCentered<ltmOutput>(mm2px(Vec(112.479, 59.677)), module, MegaSeq::GATE1OUTPUT_OUTPUT));
+		addOutput(createOutputCentered<ltmOutput>(mm2px(Vec(112.857, 72.528)), module, MegaSeq::GATE2OUTPUT_OUTPUT));
+		addOutput(createOutputCentered<ltmOutput>(mm2px(Vec(112.668, 86.324)), module, MegaSeq::CVOUTPUT_OUTPUT));
+		addOutput(createOutputCentered<ltmOutput>(mm2px(Vec(113.046, 100.31)), module, MegaSeq::SLEWOUTPUT_OUTPUT));
+		addOutput(createOutputCentered<ltmOutput>(mm2px(Vec(113.235, 115.996)), module, MegaSeq::EOCOUTPUT_OUTPUT));
+
+		
 	}
 };
 

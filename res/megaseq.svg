@@ -25,15 +25,15 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4"
-     inkscape:cx="14.920371"
-     inkscape:cy="253.83276"
+     inkscape:zoom="2.8"
+     inkscape:cx="124.74154"
+     inkscape:cy="167.23947"
      inkscape:document-units="mm"
-     inkscape:current-layer="layer2"
+     inkscape:current-layer="layer1"
      showgrid="false"
-     inkscape:window-width="1920"
-     inkscape:window-height="1017"
-     inkscape:window-x="-8"
+     inkscape:window-width="1280"
+     inkscape:window-height="961"
+     inkscape:window-x="1912"
      inkscape:window-y="-8"
      inkscape:window-maximized="1" />
   <metadata
@@ -171,7 +171,8 @@
     <g
        aria-label="step"
        style="font-style:normal;font-weight:normal;font-size:3.88055563px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-       id="text951">
+       id="text951"
+       transform="translate(0,15.119047)">
       <path
          d="m 11.356978,234.65315 v 0.32969 q -0.147794,-0.0758 -0.306958,-0.11368 -0.159163,-0.0379 -0.329695,-0.0379 -0.259588,0 -0.39033,0.0796 -0.128846,0.0796 -0.128846,0.23875 0,0.12126 0.09285,0.19137 0.09285,0.0682 0.373276,0.13074 l 0.119373,0.0265 q 0.371381,0.0796 0.526755,0.22548 0.157269,0.14401 0.157269,0.4036 0,0.29558 -0.234956,0.46801 -0.233061,0.17243 -0.642338,0.17243 -0.170532,0 -0.356223,-0.0341 -0.183796,-0.0322 -0.3884345,-0.0985 v -0.36001 q 0.1932695,0.10042 0.3808555,0.15158 0.187585,0.0493 0.371381,0.0493 0.246324,0 0.378961,-0.0834 0.132636,-0.0853 0.132636,-0.23875 0,-0.14211 -0.09663,-0.2179 -0.09474,-0.0758 -0.418751,-0.1459 l -0.121268,-0.0284 q -0.324011,-0.0682 -0.468016,-0.20843 -0.144005,-0.14211 -0.144005,-0.38843 0,-0.29938 0.212218,-0.46234 0.212218,-0.16295 0.602547,-0.16295 0.19327,0 0.363802,0.0284 0.170532,0.0284 0.314537,0.0853 z"
          style="stroke-width:0.26458332"
@@ -196,7 +197,8 @@
     <g
        aria-label="reset"
        style="font-style:normal;font-weight:normal;font-size:3.88055563px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-       id="text959">
+       id="text959"
+       transform="translate(-0.56696429,16.81994)">
       <path
          d="m 10.666852,250.41355 q -0.05874,-0.0341 -0.128847,-0.0493 -0.06821,-0.0171 -0.151584,-0.0171 -0.295589,0 -0.4547523,0.19327 Q 9.7744,250.73188 9.7744,251.09189 v 1.11793 H 9.4238616 v -2.12218 H 9.7744 v 0.3297 q 0.1098986,-0.19327 0.286115,-0.28611 0.176217,-0.0947 0.428226,-0.0947 0.036,0 0.07958,0.006 0.04358,0.004 0.09663,0.0133 z"
          style="stroke-width:0.26458332"
@@ -226,7 +228,8 @@
     <g
        aria-label="select"
        style="font-style:normal;font-weight:normal;font-size:3.88055563px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-       id="text963">
+       id="text963"
+       transform="translate(-1.1339286,13.229167)">
       <path
          d="m 11.167991,268.671 v 0.3297 q -0.147795,-0.0758 -0.306958,-0.11369 -0.159164,-0.0379 -0.329696,-0.0379 -0.259588,0 -0.390329,0.0796 -0.128847,0.0796 -0.128847,0.23875 0,0.12127 0.09284,0.19137 0.09285,0.0682 0.373277,0.13075 l 0.119372,0.0265 q 0.371381,0.0796 0.526755,0.22548 0.157269,0.14401 0.157269,0.4036 0,0.29559 -0.234956,0.46801 -0.23306,0.17243 -0.642338,0.17243 -0.170532,0 -0.356223,-0.0341 -0.1837955,-0.0322 -0.3884342,-0.0985 v -0.36001 q 0.1932699,0.10043 0.3808552,0.15159 0.187586,0.0493 0.371381,0.0493 0.246325,0 0.378961,-0.0834 0.132636,-0.0853 0.132636,-0.23874 0,-0.14212 -0.09663,-0.21791 -0.09474,-0.0758 -0.418751,-0.1459 l -0.121268,-0.0284 q -0.3240108,-0.0682 -0.4680158,-0.20843 -0.144005,-0.14211 -0.144005,-0.38843 0,-0.29938 0.2122179,-0.46233 0.2122179,-0.16296 0.6025469,-0.16296 0.19327,0 0.363802,0.0284 0.170533,0.0284 0.314538,0.0853 z"
          style="stroke-width:0.26458332"
@@ -381,6 +384,26 @@
   </g>
   <g
      inkscape:groupmode="layer"
+     id="layer3"
+     inkscape:label="Calque 2"
+     style="display:none">
+    <rect
+       style="opacity:1;fill:#ff00ff;fill-opacity:0.94117647;stroke:none;stroke-width:0.63568711;stroke-linecap:round;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect2415"
+       width="4"
+       height="4"
+       x="8.5989571"
+       y="57.692703" />
+    <rect
+       y="58.070683"
+       x="19.087795"
+       height="4"
+       width="4"
+       id="rect2417"
+       style="opacity:1;fill:#ff00ff;fill-opacity:0.94117647;stroke:none;stroke-width:0.63568711;stroke-linecap:round;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
      id="layer2"
      inkscape:label="components"
      style="display:none;opacity:1">
@@ -515,28 +538,28 @@
     <circle
        style="opacity:1;fill:#00ff00;fill-opacity:1;stroke-width:0.10961444"
        id="path49"
-       cx="13.260429"
-       cy="75.552078"
+       cx="18.363108"
+       cy="93.033478"
        r="4"
        inkscape:label="stepInput" />
     <circle
        r="4"
-       cy="90.671127"
-       cx="13.449418"
+       cy="109.94792"
+       cx="17.512661"
        id="circle856"
        style="opacity:1;fill:#00ff00;fill-opacity:1;stroke-width:0.10961444"
        inkscape:label="resetInput" />
     <circle
        style="opacity:1;fill:#00ff00;fill-opacity:1;stroke-width:0.10961444"
        id="circle858"
-       cx="13.449418"
-       cy="108.81399"
+       cx="17.985132"
+       cy="121.85418"
        r="4"
        inkscape:label="patternSelectInput" />
     <circle
        r="4"
-       cy="59.677082"
-       cx="19.686026"
+       cy="71.394341"
+       cx="23.182289"
        id="circle860"
        style="opacity:1;fill:#00ff00;fill-opacity:1;stroke-width:0.10961444"
        inkscape:label="lastStepInput" />
@@ -544,8 +567,8 @@
        inkscape:label="firstStepInput"
        style="opacity:1;fill:#00ff00;fill-opacity:1;stroke-width:0.10961444"
        id="circle862"
-       cx="7.4017992"
-       cy="59.488091"
+       cx="12.598957"
+       cy="71.394341"
        r="4" />
     <circle
        inkscape:label="gate1output"

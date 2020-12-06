@@ -1,10 +1,14 @@
-#include "plugin.hpp"
+#include <cmath>
 #include <iostream>
+
+#include "plugin.hpp"
 using namespace std;
 
 struct MegaSeq : Module {
     enum ParamIds {
         ENUMS(CVSTEP_PARAM, 16),
+        FIRSTSTEP_PARAM,
+        LASTSTEP_PARAM,
         NUM_PARAMS
     };
     enum InputIds {
@@ -45,8 +49,10 @@ struct MegaSeq : Module {
         for (int i = 0; i < 16; i++) {
             configParam(CVSTEP_PARAM + i, -10.f, 10.f, 0.f, "", " V");
         }
+        configParam(FIRSTSTEP_PARAM, 0.f, 15.f, 0.f, "firstStep", "", 0.f, 1.f, 1.f);
+        configParam(LASTSTEP_PARAM, 0.f, 15.f, 15.f, "lastStep", "", 0.f, 1.f, 1.f);
 
-		onReset();
+        onReset();
     }
 
     void onReset() override {
@@ -55,23 +61,25 @@ struct MegaSeq : Module {
         }
     }
 
-    void setIndex(int index) {
-        int numSteps = 16;
+    void setIndex(int index, int firstStep, int lastStep) {
+        int numSteps = lastStep;
         phase = 0.f;
         this->index = index;
         if (this->index >= numSteps) {
-            this->index = 0;
+            this->index = firstStep;
         }
     }
 
     void process(const ProcessArgs &args) override {
         //  run
+        int firstStep = floorf(params[FIRSTSTEP_PARAM].getValue());
+        int lastStep = floorf(params[LASTSTEP_PARAM].getValue() + 1);
         bool gateIn = false;
         if (running) {
             float clocktime = std::pow(2.f, clockParams);
             phase += clocktime * args.sampleTime;
             if (phase >= 1.f) {
-                setIndex(index + 1);
+                setIndex(index + 1, firstStep, lastStep);
             }
             gateIn = (phase < 0.5f);
         }
@@ -83,19 +91,18 @@ struct MegaSeq : Module {
             }
             outputs[GATE1_OUTPUT + i].setVoltage((running && gateIn && i == index && gates[i]) ? 10.f : 0.f);
             outputs[GATE2_OUTPUT + i].setVoltage((running && gateIn && i == index && gates[i]) ? 10.f : 0.f);
-			
+
             lights[CURRENTSTEP_LIGHT + i].setSmoothBrightness(0.0, args.sampleTime);
         }
 
         //  reset
         if (resetTrigger.process(inputs[RESET_INPUT].getVoltage())) {
-            setIndex(0);
+            setIndex(firstStep, firstStep, lastStep);
         }
 
         // outputs
         outputs[CV_OUTPUT].setVoltage(params[CVSTEP_PARAM + index].getValue());
-		
-		
+
         outputs[GATE1_OUTPUT].setVoltage((gateIn && gates[index]) ? 10.f : 0.f);
         outputs[GATE2_OUTPUT].setVoltage((gateIn && gates[index]) ? 10.f : 0.f);
         lights[CURRENTSTEP_LIGHT + index].setSmoothBrightness(gateIn, args.sampleTime);
@@ -125,9 +132,12 @@ struct MegaSeqWidget : ModuleWidget {
             }
         }
 
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.402, 59.488)), module, MegaSeq::FIRSTSTEP_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(19.686, 59.677)), module, MegaSeq::LASTSTEP_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(13.26, 75.552)), module, MegaSeq::STEP_INPUT));
+        addParam(createParamCentered<ltmSmallKnob>(mm2px(Vec(8.6, 66.429)), module, MegaSeq::FIRSTSTEP_PARAM));
+        addParam(createParamCentered<ltmSmallKnob>(mm2px(Vec(19.088, 66.429)), module, MegaSeq::LASTSTEP_PARAM));
+
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.6, 53.1)), module, MegaSeq::FIRSTSTEP_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(19.088, 53.1)), module, MegaSeq::LASTSTEP_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(13.7, 75.552)), module, MegaSeq::STEP_INPUT));
         addInput(createInputCentered<PJ301MPort>(mm2px(Vec(13.449, 90.671)), module, MegaSeq::RESET_INPUT));
         addInput(createInputCentered<PJ301MPort>(mm2px(Vec(13.449, 108.814)), module, MegaSeq::PATTERNSELECT_INPUT));
 

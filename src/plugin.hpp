@@ -15,11 +15,24 @@ struct ltmMediumKnob : SVGKnob
     
     /* data */
 };
+struct ltmSmallSnapKnob : SVGKnob
+{
+    ltmSmallSnapKnob() {
+        snap = true;
+        smooth = false;
+        box.size = Vec(6,6);
+        minAngle = -0.75*M_PI;
+		maxAngle = 0.75*M_PI;
+		setSvg(APP->window->loadSvg("C:/Users/Admin/code_projects/GIT/puce/res/ComponentLibrary/ltmSmallKnob.svg"));
+    }
+
+    
+    /* data */
+};
+
 struct ltmSmallKnob : SVGKnob
 {
     ltmSmallKnob() {
-        snap = true;
-        smooth = false;
         box.size = Vec(6,6);
         minAngle = -0.75*M_PI;
 		maxAngle = 0.75*M_PI;

@@ -13,6 +13,7 @@ struct MegaSeq : Module {
         ENUMS(CVSTEP_PARAM, 16),
         FIRSTSTEP_PARAM,
         LASTSTEP_PARAM,
+		GATELENGTH1_PARAM,
         NUM_PARAMS
     };
     enum InputIds {
@@ -46,6 +47,7 @@ struct MegaSeq : Module {
     /** Phase of internal LFO */
     float phase = 0.f;
     float step = 0.f;
+    float stageProgress = 0.0f;
 
     int index = 0;
     bool gates[16] = {};
@@ -57,14 +59,17 @@ struct MegaSeq : Module {
         }
         configParam(FIRSTSTEP_PARAM, 0.f, 15.f, 0.f, "firstStep", "", 0.f, 1.f, 1.f);
         configParam(LASTSTEP_PARAM, 0.f, 15.f, 15.f, "lastStep", "", 0.f, 1.f, 1.f);
+		configParam(GATELENGTH1_PARAM, 0.0f, 1.0f, 0.31623, "Gate", " s", 0.f, pow(1.f, 2) * 10);
 
         onReset();
     }
 
+	
     void onReset() override {
         for (int i = 0; i < 16; i++) {
             gates[i] = true;
         }
+        stageProgress = 0.0f;
     }
 
     void setIndex(int index, int resetStep, int numSteps) {
@@ -76,12 +81,22 @@ struct MegaSeq : Module {
         }
     }
 
+    bool stepStage(float length) {
+        float t = length;
+        t = pow(t, 2);
+        t *= 10.f;
+        stageProgress += APP->engine->getSampleTime();
+
+        return stageProgress > t;
+    }
+
     void process(const ProcessArgs &args) override {
         //  run
 
         // get value from params and inputs
         int firstStep = (int)clamp(roundf(params[FIRSTSTEP_PARAM].getValue() + (inputs[FIRSTSTEP_INPUT].getVoltage() * 1.5)), 0.f, 15.f);
         int lastStep = (int)clamp(roundf(params[LASTSTEP_PARAM].getValue() + (inputs[LASTSTEP_INPUT].getVoltage() * 1.5)), 0.f, 15.f);
+		float gateLength = params[GATELENGTH1_PARAM].getValue();
 
         bool gateIn = false;
         if (running) {
@@ -96,7 +111,16 @@ struct MegaSeq : Module {
                     } else {
                         setIndex(index + 1, firstStep, lastStep);
                     }
-					gateIn = clockTrigger.isHigh();
+                    // gateIn = clockTrigger.isHigh();
+                    if (stepStage(gateLength)) {
+                        if (clockTrigger.isHigh()) {
+                            stageProgress = 0.f;
+                        } else {
+                            gateIn = false;
+                        }
+                    } else {
+                        gateIn = true;
+                    }
                 }
             }
 
@@ -125,7 +149,7 @@ struct MegaSeq : Module {
             outputs[GATE1_OUTPUT + i].setVoltage((running && gateIn && i == index && gates[i]) ? 10.f : 0.f);
             outputs[GATE2_OUTPUT + i].setVoltage((running && gateIn && i == index && gates[i]) ? 10.f : 0.f);
 
-            lights[CURRENTSTEP_LIGHT + i].setSmoothBrightness(0.0, args.sampleTime * 256.f);
+            lights[CURRENTSTEP_LIGHT + i].setSmoothBrightness(0.0, args.sampleTime);
         }
 
         //  reset
@@ -142,7 +166,7 @@ struct MegaSeq : Module {
 
         outputs[GATE1_OUTPUT].setVoltage((gateIn && gates[index]) ? 10.f : 0.f);
         outputs[GATE2_OUTPUT].setVoltage((gateIn && gates[index]) ? 10.f : 0.f);
-        lights[CURRENTSTEP_LIGHT + index].setSmoothBrightness(gateIn, args.sampleTime * 1024.f);
+        lights[CURRENTSTEP_LIGHT + index].setSmoothBrightness(gateIn * 10, args.sampleTime);
     }
 };
 
@@ -169,8 +193,10 @@ struct MegaSeqWidget : ModuleWidget {
             }
         }
 
-        addParam(createParamCentered<ltmSmallKnob>(mm2px(Vec(8.5, 60.)), module, MegaSeq::FIRSTSTEP_PARAM));
-        addParam(createParamCentered<ltmSmallKnob>(mm2px(Vec(19.0, 60.)), module, MegaSeq::LASTSTEP_PARAM));
+		// GATELENGTH1_PARAM
+		addParam(createParamCentered<ltmSmallKnob>(mm2px(Vec(13.75, 75.)), module, MegaSeq::GATELENGTH1_PARAM));
+        addParam(createParamCentered<ltmSmallSnapKnob>(mm2px(Vec(8.5, 60.)), module, MegaSeq::FIRSTSTEP_PARAM));
+        addParam(createParamCentered<ltmSmallSnapKnob>(mm2px(Vec(19.0, 60.)), module, MegaSeq::LASTSTEP_PARAM));
 
         addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.5, 68.)), module, MegaSeq::FIRSTSTEP_INPUT));
         addInput(createInputCentered<PJ301MPort>(mm2px(Vec(19.0, 68.)), module, MegaSeq::LASTSTEP_INPUT));

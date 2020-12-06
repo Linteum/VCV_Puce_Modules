@@ -1,8 +1,12 @@
+#include <stdio.h>
+
 #include <cmath>
 #include <iostream>
 
 #include "plugin.hpp"
 using namespace std;
+
+char dbgBuffer[256];
 
 struct MegaSeq : Module {
     enum ParamIds {
@@ -41,6 +45,8 @@ struct MegaSeq : Module {
 
     /** Phase of internal LFO */
     float phase = 0.f;
+    float step = 0.f;
+
     int index = 0;
     bool gates[16] = {};
 
@@ -61,27 +67,54 @@ struct MegaSeq : Module {
         }
     }
 
-    void setIndex(int index, int firstStep, int lastStep) {
-        int numSteps = lastStep;
+    void setIndex(int index, int resetStep, int numSteps) {
         phase = 0.f;
-        this->index = index;
-        if (this->index >= numSteps) {
-            this->index = firstStep;
+        this->index = std::abs(index);
+
+        if (this->index >= numSteps + 1) {
+            this->index = resetStep;
         }
     }
 
     void process(const ProcessArgs &args) override {
         //  run
-        int firstStep = floorf(params[FIRSTSTEP_PARAM].getValue());
-        int lastStep = floorf(params[LASTSTEP_PARAM].getValue() + 1);
+
+        // get value from params and inputs
+        int firstStep = (int)clamp(roundf(params[FIRSTSTEP_PARAM].getValue() + (inputs[FIRSTSTEP_INPUT].getVoltage() * 1.5)), 0.f, 15.f);
+        int lastStep = (int)clamp(roundf(params[LASTSTEP_PARAM].getValue() + (inputs[LASTSTEP_INPUT].getVoltage() * 1.5)), 0.f, 15.f);
+
         bool gateIn = false;
         if (running) {
-            float clocktime = std::pow(2.f, clockParams);
-            phase += clocktime * args.sampleTime;
-            if (phase >= 1.f) {
-                setIndex(index + 1, firstStep, lastStep);
+            // si le step param est connecté
+            if (inputs[STEP_INPUT].isConnected()) {
+                if (clockTrigger.process(inputs[STEP_INPUT].getVoltage())) {
+                    if (firstStep >= lastStep) {
+                        if (index < lastStep + 1) {
+                            index = firstStep + 1;
+                        }
+                        setIndex(index - 1, lastStep, firstStep);
+                    } else {
+                        setIndex(index + 1, firstStep, lastStep);
+                    }
+					gateIn = clockTrigger.isHigh();
+                }
             }
-            gateIn = (phase < 0.5f);
+
+            // float clocktime = std::pow(2.f, clockParams);
+            // phase += clocktime * args.sampleTime;
+
+            // if (phase >= 1.f) {
+            //     // revert lecture
+            //     if (firstStep >= lastStep) {
+            //         if (index < lastStep + 1) {
+            //             index = firstStep + 1;
+            //         }
+            //         setIndex(index - 1, lastStep, firstStep);
+            //     } else {
+            //         setIndex(index + 1, firstStep, lastStep);
+            //     }
+            // }
+            // gateIn = (phase < 0.5f);
         }
 
         // select Param
@@ -92,12 +125,16 @@ struct MegaSeq : Module {
             outputs[GATE1_OUTPUT + i].setVoltage((running && gateIn && i == index && gates[i]) ? 10.f : 0.f);
             outputs[GATE2_OUTPUT + i].setVoltage((running && gateIn && i == index && gates[i]) ? 10.f : 0.f);
 
-            lights[CURRENTSTEP_LIGHT + i].setSmoothBrightness(0.0, args.sampleTime);
+            lights[CURRENTSTEP_LIGHT + i].setSmoothBrightness(0.0, args.sampleTime * 256.f);
         }
 
         //  reset
         if (resetTrigger.process(inputs[RESET_INPUT].getVoltage())) {
-            setIndex(firstStep, firstStep, lastStep);
+            if (firstStep >= lastStep) {
+                setIndex(lastStep, lastStep, firstStep);
+            } else {
+                setIndex(firstStep, firstStep, lastStep);
+            }
         }
 
         // outputs
@@ -105,7 +142,7 @@ struct MegaSeq : Module {
 
         outputs[GATE1_OUTPUT].setVoltage((gateIn && gates[index]) ? 10.f : 0.f);
         outputs[GATE2_OUTPUT].setVoltage((gateIn && gates[index]) ? 10.f : 0.f);
-        lights[CURRENTSTEP_LIGHT + index].setSmoothBrightness(gateIn, args.sampleTime);
+        lights[CURRENTSTEP_LIGHT + index].setSmoothBrightness(gateIn, args.sampleTime * 1024.f);
     }
 };
 
@@ -132,14 +169,14 @@ struct MegaSeqWidget : ModuleWidget {
             }
         }
 
-        addParam(createParamCentered<ltmSmallKnob>(mm2px(Vec(8.6, 66.429)), module, MegaSeq::FIRSTSTEP_PARAM));
-        addParam(createParamCentered<ltmSmallKnob>(mm2px(Vec(19.088, 66.429)), module, MegaSeq::LASTSTEP_PARAM));
+        addParam(createParamCentered<ltmSmallKnob>(mm2px(Vec(8.5, 60.)), module, MegaSeq::FIRSTSTEP_PARAM));
+        addParam(createParamCentered<ltmSmallKnob>(mm2px(Vec(19.0, 60.)), module, MegaSeq::LASTSTEP_PARAM));
 
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.6, 53.1)), module, MegaSeq::FIRSTSTEP_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(19.088, 53.1)), module, MegaSeq::LASTSTEP_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(13.7, 75.552)), module, MegaSeq::STEP_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(13.449, 90.671)), module, MegaSeq::RESET_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(13.449, 108.814)), module, MegaSeq::PATTERNSELECT_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.5, 68.)), module, MegaSeq::FIRSTSTEP_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(19.0, 68.)), module, MegaSeq::LASTSTEP_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(13.75, 90.)), module, MegaSeq::STEP_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(13.75, 105.)), module, MegaSeq::RESET_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(13.75, 120.)), module, MegaSeq::PATTERNSELECT_INPUT));
 
         addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(112.479, 59.677)), module, MegaSeq::GATE1_OUTPUT));
         addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(112.857, 72.528)), module, MegaSeq::GATE2_OUTPUT));

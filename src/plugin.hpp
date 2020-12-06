@@ -18,6 +18,8 @@ struct ltmMediumKnob : SVGKnob
 struct ltmSmallKnob : SVGKnob
 {
     ltmSmallKnob() {
+        snap = true;
+        smooth = false;
         box.size = Vec(6,6);
         minAngle = -0.75*M_PI;
 		maxAngle = 0.75*M_PI;

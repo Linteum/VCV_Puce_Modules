@@ -9,11 +9,27 @@ using namespace std;
 char dbgBuffer[256];
 
 struct MegaSeq : Module {
+    enum Stage {
+        GATE_STAGE,
+        STOPPED_STAGE
+    };
+
+    struct Engine {
+        bool firstStep = true;
+        rack::dsp::PulseGenerator triggerOuptutPulseGen;
+        Stage stage;
+        float stageProgress;
+        float delayLight;
+        float gateLight;
+    };
+
+    Engine *_engine{};
+
     enum ParamIds {
         ENUMS(CVSTEP_PARAM, 16),
         FIRSTSTEP_PARAM,
         LASTSTEP_PARAM,
-		GATELENGTH1_PARAM,
+        GATELENGTH1_PARAM,
         NUM_PARAMS
     };
     enum InputIds {
@@ -48,7 +64,6 @@ struct MegaSeq : Module {
     float phase = 0.f;
     float step = 0.f;
     float stageProgress = 0.0f;
-
     int index = 0;
     bool gates[16] = {};
 
@@ -59,12 +74,11 @@ struct MegaSeq : Module {
         }
         configParam(FIRSTSTEP_PARAM, 0.f, 15.f, 0.f, "firstStep", "", 0.f, 1.f, 1.f);
         configParam(LASTSTEP_PARAM, 0.f, 15.f, 15.f, "lastStep", "", 0.f, 1.f, 1.f);
-		configParam(GATELENGTH1_PARAM, 0.0f, 1.0f, 0.31623, "Gate", " s", 0.f, pow(1.f, 2) * 10);
+        configParam(GATELENGTH1_PARAM, 0.0f, 1.0f, 0.1, "Gate", " s", 0.f, pow(1.f, 2) * 10);
 
         onReset();
     }
 
-	
     void onReset() override {
         for (int i = 0; i < 16; i++) {
             gates[i] = true;
@@ -85,20 +99,21 @@ struct MegaSeq : Module {
         float t = length;
         t = pow(t, 2);
         t *= 10.f;
-        stageProgress += APP->engine->getSampleTime();
-
-        return stageProgress > t;
+        _engine->stageProgress += APP->engine->getSampleTime();
+        return _engine->stageProgress > t;
     }
 
     void process(const ProcessArgs &args) override {
         //  run
-
+        Engine &e = *_engine;
         // get value from params and inputs
         int firstStep = (int)clamp(roundf(params[FIRSTSTEP_PARAM].getValue() + (inputs[FIRSTSTEP_INPUT].getVoltage() * 1.5)), 0.f, 15.f);
         int lastStep = (int)clamp(roundf(params[LASTSTEP_PARAM].getValue() + (inputs[LASTSTEP_INPUT].getVoltage() * 1.5)), 0.f, 15.f);
-		float gateLength = params[GATELENGTH1_PARAM].getValue();
+        float gateLength = params[GATELENGTH1_PARAM].getValue();
 
-        bool gateIn = false;
+        gates[index] = false;
+        bool complete = false;
+
         if (running) {
             // si le step param est connecté
             if (inputs[STEP_INPUT].isConnected()) {
@@ -111,15 +126,29 @@ struct MegaSeq : Module {
                     } else {
                         setIndex(index + 1, firstStep, lastStep);
                     }
+                    e.stage = GATE_STAGE;
+                    e.stageProgress = 0.0f;
                     // gateIn = clockTrigger.isHigh();
-                    if (stepStage(gateLength)) {
-                        if (clockTrigger.isHigh()) {
-                            stageProgress = 0.f;
-                        } else {
-                            gateIn = false;
-                        }
-                    } else {
-                        gateIn = true;
+
+                } else {
+                    switch (e.stage) {
+                        case STOPPED_STAGE:
+                            break;
+
+                        case GATE_STAGE:
+                            if (!stepStage(gateLength)) {
+                                complete = true;
+                                if (clockTrigger.isHigh()) {
+                                    e.stage = GATE_STAGE;
+                                    stageProgress = 0.f;
+                                } else {
+                                    e.stage = STOPPED_STAGE;
+                                }
+
+                            } else {
+                                gates[index] = true;
+                            }
+                            break;
                     }
                 }
             }
@@ -146,8 +175,8 @@ struct MegaSeq : Module {
             if (gateTriggers[i].process(params[CVSTEP_PARAM + i].getValue())) {
                 // affiche les parametres du step
             }
-            outputs[GATE1_OUTPUT + i].setVoltage((running && gateIn && i == index && gates[i]) ? 10.f : 0.f);
-            outputs[GATE2_OUTPUT + i].setVoltage((running && gateIn && i == index && gates[i]) ? 10.f : 0.f);
+            outputs[GATE1_OUTPUT + i].setVoltage((running && gates[index] && i == index && gates[i]) ? 10.f : 0.f);
+            outputs[GATE2_OUTPUT + i].setVoltage((running && gates[index] && i == index && gates[i]) ? 10.f : 0.f);
 
             lights[CURRENTSTEP_LIGHT + i].setSmoothBrightness(0.0, args.sampleTime);
         }
@@ -164,9 +193,10 @@ struct MegaSeq : Module {
         // outputs
         outputs[CV_OUTPUT].setVoltage(params[CVSTEP_PARAM + index].getValue());
 
-        outputs[GATE1_OUTPUT].setVoltage((gateIn && gates[index]) ? 10.f : 0.f);
-        outputs[GATE2_OUTPUT].setVoltage((gateIn && gates[index]) ? 10.f : 0.f);
-        lights[CURRENTSTEP_LIGHT + index].setSmoothBrightness(gateIn * 10, args.sampleTime);
+        outputs[GATE1_OUTPUT].setVoltage((gates[index]) ? 10.f : 0.f);
+        outputs[GATE2_OUTPUT].setVoltage((gates[index]) ? 10.f : 0.f);
+        outputs[SLEW_OUTPUT].setVoltage(stepStage(gateLength));
+        lights[CURRENTSTEP_LIGHT + index].setSmoothBrightness(gates[index] * 10, args.sampleTime);
     }
 };
 
@@ -193,8 +223,8 @@ struct MegaSeqWidget : ModuleWidget {
             }
         }
 
-		// GATELENGTH1_PARAM
-		addParam(createParamCentered<ltmSmallKnob>(mm2px(Vec(13.75, 75.)), module, MegaSeq::GATELENGTH1_PARAM));
+        // GATELENGTH1_PARAM
+        addParam(createParamCentered<ltmSmallKnob>(mm2px(Vec(13.75, 75.)), module, MegaSeq::GATELENGTH1_PARAM));
         addParam(createParamCentered<ltmSmallSnapKnob>(mm2px(Vec(8.5, 60.)), module, MegaSeq::FIRSTSTEP_PARAM));
         addParam(createParamCentered<ltmSmallSnapKnob>(mm2px(Vec(19.0, 60.)), module, MegaSeq::LASTSTEP_PARAM));
 

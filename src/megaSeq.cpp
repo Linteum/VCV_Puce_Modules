@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+
 #include <cmath>
 #include <iostream>
 
@@ -13,17 +14,6 @@ struct MegaSeq : Module {
         GATE_STAGE,
         STOPPED_STAGE
     };
-
-    struct Engine {
-        bool firstStep = true;
-        rack::dsp::PulseGenerator triggerOuptutPulseGen;
-        Stage stage;
-        float stageProgress;
-        float delayLight;
-        float gateLight;
-    };
-
-    Engine *_engine{};
 
     enum ParamIds {
         ENUMS(CVSTEP_PARAM, 16),
@@ -67,6 +57,8 @@ struct MegaSeq : Module {
     int index = 0;
     bool gates[16] = {};
 
+    Stage stage;
+
     MegaSeq() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         for (int i = 0; i < 16; i++) {
@@ -74,8 +66,8 @@ struct MegaSeq : Module {
         }
         configParam(FIRSTSTEP_PARAM, 0.f, 15.f, 0.f, "firstStep", "", 0.f, 1.f, 1.f);
         configParam(LASTSTEP_PARAM, 0.f, 15.f, 15.f, "lastStep", "", 0.f, 1.f, 1.f);
-        configParam(GATELENGTH1_PARAM, 0.0f, 1.0f, 0.1, "Gate", " s", 0.f, pow(1.f, 2) * 10);
-
+        configParam<bogaudio::EnvelopeSegmentParamQuantity>(GATELENGTH1_PARAM, 0.0f, 1.0f, 0.31623f, "Gate", " s");
+        
         onReset();
     }
 
@@ -84,6 +76,7 @@ struct MegaSeq : Module {
             gates[i] = true;
         }
         stageProgress = 0.0f;
+        stage = STOPPED_STAGE;
     }
 
     void setIndex(int index, int resetStep, int numSteps) {
@@ -99,13 +92,13 @@ struct MegaSeq : Module {
         float t = length;
         t = pow(t, 2);
         t *= 10.f;
-        _engine->stageProgress += APP->engine->getSampleTime();
-        return _engine->stageProgress > t;
+        stageProgress += APP->engine->getSampleTime();
+        return stageProgress > t;
     }
 
     void process(const ProcessArgs &args) override {
         //  run
-        Engine &e = *_engine;
+
         // get value from params and inputs
         int firstStep = (int)clamp(roundf(params[FIRSTSTEP_PARAM].getValue() + (inputs[FIRSTSTEP_INPUT].getVoltage() * 1.5)), 0.f, 15.f);
         int lastStep = (int)clamp(roundf(params[LASTSTEP_PARAM].getValue() + (inputs[LASTSTEP_INPUT].getVoltage() * 1.5)), 0.f, 15.f);
@@ -126,23 +119,23 @@ struct MegaSeq : Module {
                     } else {
                         setIndex(index + 1, firstStep, lastStep);
                     }
-                    e.stage = GATE_STAGE;
-                    e.stageProgress = 0.0f;
+                    stage = GATE_STAGE;
+                    stageProgress = 0.0f;
                     // gateIn = clockTrigger.isHigh();
 
                 } else {
-                    switch (e.stage) {
+                    switch (stage) {
                         case STOPPED_STAGE:
                             break;
 
                         case GATE_STAGE:
-                            if (!stepStage(gateLength)) {
+                            if (stepStage(gateLength)) {
                                 complete = true;
                                 if (clockTrigger.isHigh()) {
-                                    e.stage = GATE_STAGE;
+                                    stage = GATE_STAGE;
                                     stageProgress = 0.f;
                                 } else {
-                                    e.stage = STOPPED_STAGE;
+                                    stage = STOPPED_STAGE;
                                 }
 
                             } else {

@@ -1,197 +1,161 @@
-#include <stdio.h>
+#include "megaSeq.hpp"
 
+#include <stdio.h>
 
 #include <cmath>
 #include <iostream>
 
-#include "plugin.hpp"
+#include "plugin.cpp"
+
 using namespace std;
 
 char dbgBuffer[256];
+int _channels;
 
-struct MegaSeq : Module {
-    enum Stage {
-        GATE_STAGE,
-        STOPPED_STAGE
-    };
+void MegaSeq::Engine::reset() {
+    triggerOuptutPulseGen.process(10.0);
+    stage = STOPPED_STAGE;
+    stageProgress = 0.0;
+    delayLight = 0.0;
+    gateLight = 0.0;
+    index = 0;
 
-    enum ParamIds {
-        ENUMS(CVSTEP_PARAM, 16),
-        FIRSTSTEP_PARAM,
-        LASTSTEP_PARAM,
-        GATELENGTH1_PARAM,
-        NUM_PARAMS
-    };
-    enum InputIds {
-        FIRSTSTEP_INPUT,
-        LASTSTEP_INPUT,
-        STEP_INPUT,
-        RESET_INPUT,
-        PATTERNSELECT_INPUT,
-        NUM_INPUTS
-    };
-    enum OutputIds {
-        GATE1_OUTPUT,
-        GATE2_OUTPUT,
-        CV_OUTPUT,
-        SLEW_OUTPUT,
-        EOC_OUTPUT,
-        NUM_OUTPUTS
-    };
-    enum LightIds {
-        ENUMS(CURRENTSTEP_LIGHT, 16),
-        NUM_LIGHTS
-    };
-
-    float clockParams = 2.f;
-    bool running = true;
-    dsp::SchmittTrigger clockTrigger;
-    dsp::SchmittTrigger runningTrigger;
-    dsp::SchmittTrigger resetTrigger;
-    dsp::SchmittTrigger gateTriggers[16];
-
-    /** Phase of internal LFO */
-    float phase = 0.f;
-    float step = 0.f;
-    float stageProgress = 0.0f;
-    int index = 0;
-    bool gates[16] = {};
-
-    Stage stage;
-
-    MegaSeq() {
-        config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-        for (int i = 0; i < 16; i++) {
-            configParam(CVSTEP_PARAM + i, -10.f, 10.f, 0.f, "", " V");
-        }
-        configParam(FIRSTSTEP_PARAM, 0.f, 15.f, 0.f, "firstStep", "", 0.f, 1.f, 1.f);
-        configParam(LASTSTEP_PARAM, 0.f, 15.f, 15.f, "lastStep", "", 0.f, 1.f, 1.f);
-        configParam<bogaudio::EnvelopeSegmentParamQuantity>(GATELENGTH1_PARAM, 0.0f, 1.0f, 0.31623f, "Gate", " s");
-        
-        onReset();
+    phase = 0.f;
+    step = 0.f;
+    for (int i = 0; i < 16; i++) {
+        gates[0][i] = true;
+        gates[1][i] = true;
     }
+}
 
-    void onReset() override {
-        for (int i = 0; i < 16; i++) {
-            gates[i] = true;
-        }
-        stageProgress = 0.0f;
-        stage = STOPPED_STAGE;
+void MegaSeq::onReset() {
+    for (int c = 0; c < _channels; ++c) {
+        _engines[c]->reset();
     }
+}
 
-    void setIndex(int index, int resetStep, int numSteps) {
-        phase = 0.f;
-        this->index = std::abs(index);
+void MegaSeq::setIndex(int c, int index, int resetStep, int numSteps) {
+    phase = 0.f;
+    index = std::abs(index);
 
-        if (this->index >= numSteps + 1) {
-            this->index = resetStep;
-        }
+    if (index >= numSteps + 1) {
+        _engines[c]->index = resetStep;
     }
+}
 
-    bool stepStage(float length) {
-        float t = length;
-        t = pow(t, 2);
-        t *= 10.f;
-        stageProgress += APP->engine->getSampleTime();
-        return stageProgress > t;
-    }
+bool MegaSeq::stepStage(int c, Param &knob) {
+    float t = knob.value;
+    t = pow(t, 2);
+    t *= 10.f;
+    _engines[c]->stageProgress += APP->engine->getSampleTime();
+    return _engines[c]->stageProgress > t;
+}
 
-    void process(const ProcessArgs &args) override {
-        //  run
+void MegaSeq::processChannel(const ProcessArgs &args, int c) {
+    //  run
+    Engine &e = *_engines[c];
+    // Param gateLengths[2];
+    // get value from params and inputs
 
-        // get value from params and inputs
-        int firstStep = (int)clamp(roundf(params[FIRSTSTEP_PARAM].getValue() + (inputs[FIRSTSTEP_INPUT].getVoltage() * 1.5)), 0.f, 15.f);
-        int lastStep = (int)clamp(roundf(params[LASTSTEP_PARAM].getValue() + (inputs[LASTSTEP_INPUT].getVoltage() * 1.5)), 0.f, 15.f);
-        float gateLength = params[GATELENGTH1_PARAM].getValue();
+    // je les passe en poly ?
+    int firstStep = (int)clamp(roundf(params[FIRSTSTEP_PARAM].getValue() + (inputs[FIRSTSTEP_INPUT].getVoltage() * 1.5)), 0.f, 15.f);
+    int lastStep = (int)clamp(roundf(params[LASTSTEP_PARAM].getValue() + (inputs[LASTSTEP_INPUT].getVoltage() * 1.5)), 0.f, 15.f);
+    Param gateLength = params[GATELENGTH1_PARAM];
+    // gateLengths[2] = {params[GATELENGTH1_PARAM],params[GATELENGTH2_PARAM] };
 
-        gates[index] = false;
-        bool complete = false;
+    e.gates[0][e.index] = false;
+    e.gates[1][e.index] = false;
 
-        if (running) {
-            // si le step param est connecté
-            if (inputs[STEP_INPUT].isConnected()) {
-                if (clockTrigger.process(inputs[STEP_INPUT].getVoltage())) {
-                    if (firstStep >= lastStep) {
-                        if (index < lastStep + 1) {
-                            index = firstStep + 1;
-                        }
-                        setIndex(index - 1, lastStep, firstStep);
-                    } else {
-                        setIndex(index + 1, firstStep, lastStep);
+    bool complete = false;
+
+    if (running) {
+        // si le step param est connecté
+        if (inputs[STEP_INPUT].isConnected()) {
+            if (clockTrigger.process(inputs[STEP_INPUT].getPolyVoltage(c))) {
+                if (firstStep >= lastStep) {
+                    if (e.index < lastStep + 1) {
+                        e.index = firstStep + 1;
                     }
-                    stage = GATE_STAGE;
-                    stageProgress = 0.0f;
-                    // gateIn = clockTrigger.isHigh();
-
+                    setIndex(c, e.index - 1, lastStep, firstStep);
                 } else {
-                    switch (stage) {
-                        case STOPPED_STAGE:
-                            break;
+                    setIndex(c, e.index + 1, firstStep, lastStep);
+                }
+                e.stage = GATE_STAGE;
+                e.stageProgress = 0.0f;
+                // gateIn = clockTrigger.isHigh();
 
-                        case GATE_STAGE:
-                            if (stepStage(gateLength)) {
+            } else {
+                switch (e.stage) {
+                    case STOPPED_STAGE:
+                        break;
+
+                    case GATE_STAGE:
+                        for (int i = 0; i < 2; i++) {
+                            if (stepStage(c, gateLength)) {
                                 complete = true;
                                 if (clockTrigger.isHigh()) {
-                                    stage = GATE_STAGE;
-                                    stageProgress = 0.f;
+                                    e.stage = GATE_STAGE;
+                                    e.stageProgress = 0.f;
                                 } else {
-                                    stage = STOPPED_STAGE;
+                                    e.stage = STOPPED_STAGE;
                                 }
 
                             } else {
-                                gates[index] = true;
+                                e.gates[0][e.index] = true;
+                                e.gates[1][e.index] = true;
                             }
-                            break;
-                    }
+                        }
+
+                        break;
                 }
             }
-
-            // float clocktime = std::pow(2.f, clockParams);
-            // phase += clocktime * args.sampleTime;
-
-            // if (phase >= 1.f) {
-            //     // revert lecture
-            //     if (firstStep >= lastStep) {
-            //         if (index < lastStep + 1) {
-            //             index = firstStep + 1;
-            //         }
-            //         setIndex(index - 1, lastStep, firstStep);
-            //     } else {
-            //         setIndex(index + 1, firstStep, lastStep);
-            //     }
-            // }
-            // gateIn = (phase < 0.5f);
         }
 
-        // select Param
-        for (int i = 0; i < 16; i++) {
-            if (gateTriggers[i].process(params[CVSTEP_PARAM + i].getValue())) {
-                // affiche les parametres du step
-            }
-            outputs[GATE1_OUTPUT + i].setVoltage((running && gates[index] && i == index && gates[i]) ? 10.f : 0.f);
-            outputs[GATE2_OUTPUT + i].setVoltage((running && gates[index] && i == index && gates[i]) ? 10.f : 0.f);
+        // float clocktime = std::pow(2.f, clockParams);
+        // phase += clocktime * args.sampleTime;
 
-            lights[CURRENTSTEP_LIGHT + i].setSmoothBrightness(0.0, args.sampleTime);
-        }
-
-        //  reset
-        if (resetTrigger.process(inputs[RESET_INPUT].getVoltage())) {
-            if (firstStep >= lastStep) {
-                setIndex(lastStep, lastStep, firstStep);
-            } else {
-                setIndex(firstStep, firstStep, lastStep);
-            }
-        }
-
-        // outputs
-        outputs[CV_OUTPUT].setVoltage(params[CVSTEP_PARAM + index].getValue());
-
-        outputs[GATE1_OUTPUT].setVoltage((gates[index]) ? 10.f : 0.f);
-        outputs[GATE2_OUTPUT].setVoltage((gates[index]) ? 10.f : 0.f);
-        outputs[SLEW_OUTPUT].setVoltage(stepStage(gateLength));
-        lights[CURRENTSTEP_LIGHT + index].setSmoothBrightness(gates[index] * 10, args.sampleTime);
+        // if (phase >= 1.f) {
+        //     // revert lecture
+        //     if (firstStep >= lastStep) {
+        //         if (index < lastStep + 1) {
+        //             index = firstStep + 1;
+        //         }
+        //         setIndex(index - 1, lastStep, firstStep);
+        //     } else {
+        //         setIndex(index + 1, firstStep, lastStep);
+        //     }
+        // }
+        // gateIn = (phase < 0.5f);
     }
-};
+
+    // select Param
+    for (int i = 0; i < 16; i++) {
+        if (gateTriggers[i].process(params[CVSTEP_PARAM + i].getValue())) {
+            // affiche les parametres du step
+        }
+        outputs[GATE1_OUTPUT + i].setVoltage((running && e.gates[e.index] && i == e.index && e.gates[i]) ? 10.f : 0.f);
+        outputs[GATE2_OUTPUT + i].setVoltage((running && e.gates[e.index] && i == e.index && e.gates[i]) ? 10.f : 0.f);
+
+        lights[CURRENTSTEP_LIGHT + i].setSmoothBrightness(0.0, args.sampleTime);
+    }
+
+    //  reset
+    if (resetTrigger.process(inputs[RESET_INPUT].getVoltage())) {
+        if (firstStep >= lastStep) {
+            setIndex(c, lastStep, lastStep, firstStep);
+        } else {
+            setIndex(c, firstStep, firstStep, lastStep);
+        }
+    }
+
+    // outputs
+    outputs[CV_OUTPUT].setVoltage(params[CVSTEP_PARAM + e.index].getValue());
+
+    outputs[GATE1_OUTPUT].setVoltage((e.gates[0][e.index]) ? 10.f : 0.f, c);
+    outputs[GATE2_OUTPUT].setVoltage((e.gates[1][e.index]) ? 10.f : 0.f, c);
+    outputs[SLEW_OUTPUT].setVoltage(stepStage(c, gateLength), c);
+    lights[CURRENTSTEP_LIGHT + e.index].setSmoothBrightness(e.gates[1][e.index] * 10, args.sampleTime);
+}
 
 struct MegaSeqWidget : ModuleWidget {
     MegaSeqWidget(MegaSeq *module) {

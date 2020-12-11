@@ -2,18 +2,39 @@
 
 #include "param_quantities.hpp"
 
-namespace ltm {
+extern Model* modelMegaSeq;
+
+
 struct MegaSeq : Module {
     enum Stage {
         GATE_STAGE,
         STOPPED_STAGE
     };
 
+    struct Engine {
+        bool firstStep = true;
+        rack::dsp::PulseGenerator triggerOuptutPulseGen;
+        Stage stage;
+        float stageProgress;
+        float delayLight;
+        float gateLight;
+        float phase;
+        float step;
+        int index;
+        bool gates[2][16];
+        void reset();
+    };
+
+    Engine *_engines[16]{};
+    float phase;
+    bool running = true;
+
     enum ParamIds {
         ENUMS(CVSTEP_PARAM, 16),
         FIRSTSTEP_PARAM,
         LASTSTEP_PARAM,
         GATELENGTH1_PARAM,
+        GATELENGTH2_PARAM,
         NUM_PARAMS
     };
     enum InputIds {
@@ -37,6 +58,11 @@ struct MegaSeq : Module {
         NUM_LIGHTS
     };
 
+    dsp::SchmittTrigger clockTrigger;
+    dsp::SchmittTrigger runningTrigger;
+    dsp::SchmittTrigger resetTrigger;
+    dsp::SchmittTrigger gateTriggers[16];
+
     MegaSeq() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         for (int i = 0; i < 16; i++) {
@@ -49,13 +75,13 @@ struct MegaSeq : Module {
         onReset();
     }
 
-    void onReset() override;
-    void setIndex(int index, int resetStep, int numSteps);
-    bool stepStage(float length);
-    void processChannel(const ProcessArgs& args) override;
-
+    int channels();
+    void reset() ;
+    void onReset()override;
+    void setIndex(int c, int index, int resetStep, int numSteps);
+    bool stepStage(int c, Param& knob);
+    void processChannel(const ProcessArgs& args, int c);
 };
-}  // namespace ltm
 
 struct ltmMediumKnob : SVGKnob {
     ltmMediumKnob() {
@@ -64,8 +90,6 @@ struct ltmMediumKnob : SVGKnob {
         maxAngle = 0.75 * M_PI;
         setSvg(APP->window->loadSvg("C:/Users/Admin/code_projects/GIT/puce/res/ComponentLibrary/ltmMediumKnob.svg"));
     }
-
-    /* data */
 };
 struct ltmSmallSnapKnob : SVGKnob {
     ltmSmallSnapKnob() {
@@ -76,8 +100,6 @@ struct ltmSmallSnapKnob : SVGKnob {
         maxAngle = 0.75 * M_PI;
         setSvg(APP->window->loadSvg("C:/Users/Admin/code_projects/GIT/puce/res/ComponentLibrary/ltmSmallKnob.svg"));
     }
-
-    /* data */
 };
 
 struct ltmSmallKnob : SVGKnob {
@@ -87,19 +109,14 @@ struct ltmSmallKnob : SVGKnob {
         maxAngle = 0.75 * M_PI;
         setSvg(APP->window->loadSvg("C:/Users/Admin/code_projects/GIT/puce/res/ComponentLibrary/ltmSmallKnob.svg"));
     }
-
-    /* data */
 };
 struct ltmInput : app::SvgPort {
     ltmInput() {
         setSvg(APP->window->loadSvg("C:/Users/Admin/code_projects/GIT/puce/res/ComponentLibrary/ltmInput.svg"));
     }
-
-    /* data */
 };
 struct ltmOutput : app::SvgPort {
     ltmOutput() {
         setSvg(APP->window->loadSvg("C:/Users/Admin/code_projects/GIT/puce/res/ComponentLibrary/ltmOutput.svg"));
     }
-    /* data */
 };

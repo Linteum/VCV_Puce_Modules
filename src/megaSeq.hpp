@@ -1,9 +1,47 @@
 #pragma once
+#include <cmath>
 
-#include "param_quantities.hpp"
+#include "plugin.hpp"
+
+template <int scale>
+struct ScaledSquaringParamQuantity : ParamQuantity {
+    float getDisplayValue() override {
+        float v = getValue();
+        if (!module) {
+            return v;
+        }
+
+        float vv = v * v;
+        vv *= (float)scale;
+        vv += displayOffset;
+        if (v < 0.0f) {
+            return -vv;
+        }
+        return vv;
+    }
+
+    void setDisplayValue(float displayValue) override {
+        if (!module) {
+            return;
+        }
+        displayValue -= displayOffset;
+        float v = fabsf(displayValue) / (float)abs(scale);
+        v = powf(v, 0.5f);
+        if (displayValue < 0.0f && scale > 0) {
+            setValue(-v);
+        } else {
+            setValue(v);
+        }
+    }
+};
+
+typedef ScaledSquaringParamQuantity<1> OneXSquaringParamQuantity;
+
+typedef ScaledSquaringParamQuantity<10> TenXSquaringParamQuantity;
+
+typedef TenXSquaringParamQuantity EnvelopeSegmentParamQuantity;
 
 extern Model* modelMegaSeq;
-
 
 struct MegaSeq : Module {
     enum Stage {
@@ -12,22 +50,27 @@ struct MegaSeq : Module {
     };
 
     struct Engine {
-        bool firstStep = true;
-        rack::dsp::PulseGenerator triggerOuptutPulseGen;
         Stage stage;
+        int firstStep;
+        int lastStep;
+
+        dsp::SchmittTrigger trigger;
+        dsp::PulseGenerator triggerOuptutPulseGen;
         float stageProgress;
         float delayLight;
         float gateLight;
         float phase;
         float step;
         int index;
-        bool gates[2][16];
+        bool gates1[16];
+        bool gates2[16];
         void reset();
     };
 
-    Engine *_engines[16]{};
+    Engine* _engines[16];
     float phase;
     bool running = true;
+    int genIndex;
 
     enum ParamIds {
         ENUMS(CVSTEP_PARAM, 16),
@@ -63,6 +106,8 @@ struct MegaSeq : Module {
     dsp::SchmittTrigger resetTrigger;
     dsp::SchmittTrigger gateTriggers[16];
 
+    
+    
     MegaSeq() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         for (int i = 0; i < 16; i++) {
@@ -70,17 +115,20 @@ struct MegaSeq : Module {
         }
         configParam(FIRSTSTEP_PARAM, 0.f, 15.f, 0.f, "firstStep", "", 0.f, 1.f, 1.f);
         configParam(LASTSTEP_PARAM, 0.f, 15.f, 15.f, "lastStep", "", 0.f, 1.f, 1.f);
-        configParam<bogaudio::EnvelopeSegmentParamQuantity>(GATELENGTH1_PARAM, 0.0f, 1.0f, 0.31623f, "Gate", " s");
-
-        onReset();
+        configParam<EnvelopeSegmentParamQuantity>(GATELENGTH1_PARAM, 0.0f, 1.0f, 0.31623f, "Gate", " s");
     }
 
+    virtual ~MegaSeq();
+
     int channels();
-    void reset() ;
-    void onReset()override;
+    void addChannel(int c);
+    void removeChannel(int c);
+
+    void reset();
+    void onReset() override;
     void setIndex(int c, int index, int resetStep, int numSteps);
     bool stepStage(int c, Param& knob);
-    void processChannel(const ProcessArgs& args, int c);
+    void processChannel(const ProcessArgs& args);
 };
 
 struct ltmMediumKnob : SVGKnob {

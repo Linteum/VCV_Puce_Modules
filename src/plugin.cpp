@@ -1,3 +1,5 @@
+#include "plugin.hpp"
+
 #include "megaSeq.hpp"
 
 Plugin* pluginInstance;
@@ -7,7 +9,6 @@ void init(rack::Plugin* p) {
 	pluginInstance = p;
 
 	// Add modules here
-	// p->addModel(modelMyModule);
 	p->addModel(modelMegaSeq);
 
 	// Any other plugin initialization may go here.

@@ -1,7 +1,5 @@
 #include "plugin.hpp"
 
-#include "megaSeq.hpp"
-
 Plugin* pluginInstance;
 
 
